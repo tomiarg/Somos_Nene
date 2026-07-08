@@ -150,7 +150,7 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
         {Object.keys(tareasPorCliente).length === 0 ? (
           <div className="p-8 text-center text-gray-500">No hay tareas asignadas.</div>
         ) : (
-          Object.entries(tareasPorCliente).map(([cliente, tareasDelCliente]) => {
+          Object.entries(tareasPorCliente).map(([cliente, tareasDelCliente]: [string, any]) => {
             const estaExpandido = clientesExpandidos[cliente];
 
             return (
