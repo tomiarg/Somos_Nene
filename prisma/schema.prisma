@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Usuarios del sistema
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role      @default(EMPLEADO)
+  
+  // Relaciones
+  pagosRegistrados Pago[]
+  historialCambios HistorialCliente[]
+  tareasAsignadas  Tarea[] // Tareas que tiene que hacer esta persona (ej: Mumi)
+}
+
+enum Role {
+  ADMIN
+  EMPLEADO
+}
+
+// 2. Clientes 
+model Cliente {
+  id              String    @id @default(uuid())
+  nombre          String
+  codigoInterno   String?   // Para guardar las siglas tipo "JVI" o "MRS"
+  instagramUser   String?
+  instagramPass   String?   
+  montoMensual    Float     // El monto que abonan por mes
+  montoSecundario Float?    // Por los montos en gris 
+  celular         String?
+  cuit            String?
+  activo          Boolean   @default(true)
+
+  // Relaciones
+  pagos           Pago[]
+  tareas          Tarea[]
+  historial       HistorialCliente[]
+  publicaciones   Publicacion[]
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// 3. Histórico de Clientes (Auditoría)
+model HistorialCliente {
+  id          String   @id @default(uuid())
+  accion      String   // Ejemplo: "CREADO", "EDITADO", "ELIMINADO"
+  detalles    String   // Guardaremos en texto qué cambió exactamente
+  fecha       DateTime @default(now())
+
+  clienteId   String
+  cliente     Cliente  @relation(fields: [clienteId], references: [id])
+  
+  usuarioId   String
+  usuario     User     @relation(fields: [usuarioId], references: [id])
+}
+
+// 4. Pagos (Restringido solo a DUEÑOS)
+model Pago {
+  id               String    @id @default(cuid())
+  monto            Float     @default(0)
+  concepto         String    // ej: "Abono Julio 2026"
+  fechaVencimiento DateTime
+  fechaPago        DateTime? 
+  estado           String    @default("PENDIENTE") // PENDIENTE, PAGADO
+  moneda           String    @default("ARS")       // ARS, USD
+  cuentaDestino    String    @default("PENDIENTE") // Mercado Pago, Galicia, Efectivo, etc.
+  
+  // Relación con el Cliente (La que ya teníamos)
+  clienteId        String
+  cliente          Cliente   @relation(fields: [clienteId], references: [id])
+  
+  // 🔗 EL PUENTE QUE FALTA: Relación con el Usuario/Dueño que registra el cobro
+  usuarioId        String?   // Con signo de pregunta por si n8n lo crea en automático sin un usuario físico
+  usuario          User?     @relation(fields: [usuarioId], references: [id])
+
+  createdAt        DateTime  @default(now())
+}
+
+// 5. Tareas (El nuevo motor de producción de contenido)
+model Tarea {
+  id              String      @id @default(uuid())
+  titulo          String      // Ej: "Carrusel 1", "Reel Lanzamiento"
+  tipo            TipoTarea   
+  fechaAsignada   DateTime    // Día que toca publicarlo o entregarlo
+  estado          EstadoTarea @default(PENDIENTE)
+  
+  // Espacio para instrucciones (Ustedes -> Mumi)
+  instrucciones   String?     // Detalle de slides o "espíritu" del reel
+  caption         String?     // El texto para IG 
+  linkCanva       String?     // El link del diseño
+  linkMaterial    String?   // 
+  grupoStories    String?     // Ej: "Grupo A" o "Grupo B" (Para Mumi)
+  
+  // Feedback de Mumi cuando termina
+  paginasCanva    String?     // Ej: "Páginas 67 a 72"
+  fechaCompletado DateTime?   // Cuándo Mumi le dio al check verde
+
+  // Relaciones
+  clienteId       String
+  cliente         Cliente     @relation(fields: [clienteId], references: [id])
+  
+  asignadoAId     String?     // Quién hace esto
+  asignadoA       User?       @relation(fields: [asignadoAId], references: [id])
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+// Opciones de tipos de tarea
+enum TipoTarea {
+  CARRUSEL
+  REEL
+  STORY
+  POSTEO
+  OTRO
+}
+
+// Estados del flujo de trabajo
+enum EstadoTarea {1
+  PENDIENTE
+  EN_PROCESO
+  LISTO_PARA_REVISION 
+  COMPLETADO          
+}
+
+model Publicacion {
+  id            String   @id @default(cuid())
+  tipo          String   // REEL, CARRUSEL, STORY, etc.
+  fechaPrevista DateTime
+  estado        String   @default("PENDIENTE") // PENDIENTE o PUBLICADO
+  clienteId     String
+  cliente       Cliente  @relation(fields: [clienteId], references: [id])
+  createdAt     DateTime @default(now())
+}
