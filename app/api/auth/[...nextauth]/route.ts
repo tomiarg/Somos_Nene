@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+console.log("⚠️ ATENCIÓN - EL SECRETO ES:", process.env.NEXTAUTH_SECRET);
+
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
