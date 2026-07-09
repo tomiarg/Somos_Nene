@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 export default function FinanzasPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession() || {};
   const [datos, setDatos] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
   const [mesSeleccionado, setMesSeleccionado] = useState<string>("");
