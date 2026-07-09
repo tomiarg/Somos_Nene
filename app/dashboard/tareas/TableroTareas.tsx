@@ -176,7 +176,7 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
                     
                     {/* Filtramos y mostramos dinámicamente cada categoría */}
                     {categoriasContenido.map(categoria => {
-                      const tareasDeEsteTipo = tareasDelCliente.filter(t => t.tipo === categoria.id);
+                      const tareasDeEsteTipo = tareasDelCliente.filter((t: any) => t.tipo === categoria.id);
                       
                       if (tareasDeEsteTipo.length === 0) return null; // Si no hay de este tipo, no dibuja la sección
 
@@ -186,7 +186,7 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
                             <span className="text-xl">{categoria.icono}</span> {categoria.titulo}
                           </h4>
                           <ul className="space-y-4">
-                            {tareasDeEsteTipo.map((tarea, index) => renderTarjetaTarea(tarea, index))}
+                           {tareasDeEsteTipo.map((tarea: any, index: number) => renderTarjetaTarea(tarea, index))}
                           </ul>
                         </div>
                       );

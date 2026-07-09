@@ -10,9 +10,9 @@ export default async function NuevaTareaPage() {
   const session = await getServerSession();
   const esAdmin = (session?.user as any)?.role === "ADMIN";
 
- // if (!esAdmin) {
- //   redirect("/dashboard"); // Si un empleado intenta entrar acá, lo pateamos
-  //}
+  if (!esAdmin) {
+    redirect("/dashboard"); // Si un empleado intenta entrar acá, lo pateamos
+}
 
   // Buscamos los clientes activos y los empleados para pasárselos al formulario
   const clientes = await prisma.cliente.findMany({

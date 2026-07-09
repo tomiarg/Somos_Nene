@@ -1,8 +1,10 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 export default function FinanzasPage() {
+  const { data: session, status } = useSession();
   const [datos, setDatos] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
   const [mesSeleccionado, setMesSeleccionado] = useState<string>("");
@@ -67,7 +69,19 @@ export default function FinanzasPage() {
     }
   };
 
-  if (cargando) return <div className="p-8 text-black font-bold">Calculando libros contables...</div>;
+  // 1. Espera a que cargue tanto la sesión como los datos
+  if (status === "loading" || cargando) return <div className="p-8 text-black font-bold">Calculando libros contables...</div>;
+
+  // 2. 🔒 CANDADO REAL: Si no hay usuario logueado, o su rol NO es ADMIN, lo rebota.
+  if (!session || (session.user as any)?.role !== "ADMIN") {
+    return (
+      <div className="p-8 max-w-xl mx-auto mt-20 text-center bg-white border border-red-100 rounded-2xl shadow-xl">
+        <span className="text-6xl">🚫</span>
+        <h2 className="text-2xl font-black text-red-600 mt-4 uppercase">Acceso Restringido</h2>
+        <p className="text-gray-500 mt-2 font-medium">Este espacio financiero está reservado únicamente para los dueños de SOMOS NENE.</p>
+      </div>
+    );
+  }
 
   // Si la base de datos está vacía en el primer arranque, usamos este mock estratégico de respaldo para que no rompa
   const resumen = datos?.resumen || { totalFacturado: 1500000, totalCobrado: 1100000, totalDeuda: 400000, totalGastos: 900000, gananciaNeta: 200000, margenUtilidad: 22, puntoEquilibrio: 900000, superadoPuntoEquilibrio: true };

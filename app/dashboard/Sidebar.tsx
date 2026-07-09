@@ -1,10 +1,12 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 export default function Sidebar() {
+  const { data: session } = useSession();
   const pathname = usePathname();
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -13,8 +15,10 @@ export default function Sidebar() {
     { href: "/dashboard/clientes", icon: "👥", label: "Clientes" },
     { href: "/dashboard/tareas", icon: "✅", label: "Producción (Mumi)" },
     { href: "/dashboard/calendario", icon: "📅", label: "Calendario" },
-    { href: "/dashboard/finanzas", icon: "📊", label: "Finanzas (Dueños)" },
   ];
+  if ((session?.user as any)?.role === "ADMIN") {
+    links.push({ href: "/dashboard/finanzas", icon: "📊", label: "Bóveda" });
+  }
 
   // Función para saber si un link está activo
   const isActive = (path: string) => pathname.startsWith(path);

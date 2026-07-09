@@ -7,13 +7,16 @@ const prisma = new PrismaClient();
 // Crear una nueva tarea
 export async function POST(request: Request) {
   try {
-    // const esAdmin = (session?.user as any)?.role === "ADMIN";
-
-    // Solo los administradores pueden crear/asignar tareas
-    // if (!esAdmin) {
-    //   return NextResponse.json({ error: "No autorizado" }, { status: 401 }
-    //}
-
+     // 1. ESTA LÍNEA TE FALTABA: Traer la sesión real del servidor
+     const session = await getServerSession();
+     
+     const esAdmin = (session?.user as any)?.role === "ADMIN";
+     
+     // Solo los administradores pueden crear/asignar tareas
+     if (!esAdmin) {
+       // 2. ACÁ FALTABA EL PARÉNTESIS Y PUNTO Y COMA AL FINAL:
+       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+     }
     const body = await request.json();
     
     const nuevaTarea = await prisma.tarea.create({
@@ -48,7 +51,7 @@ export async function GET(request: Request) {
     if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     // Si es ADMIN, trae TODAS las tareas. Si es EMPLEADO, trae SOLO las suyas.
-    //const filtro = esAdmin ? {} : { asignadoAId: userId };
+    const filtro = esAdmin ? {} : { asignadoAId: userId };
 
     const tareas = await prisma.tarea.findMany({
       //where: filtro,
