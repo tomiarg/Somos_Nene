@@ -65,3 +65,5 @@ const handler = NextAuth({
 });
 
 export { handler as GET, handler as POST };
+
+// Vaciando el caché de Railway para que lea las variables
