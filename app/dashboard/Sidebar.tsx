@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 export default function Sidebar() {
-  const { data: session } = useSession();
+  const { data: session } = useSession() || {};
   const pathname = usePathname();
   const [menuAbierto, setMenuAbierto] = useState(false);
 
