@@ -1,13 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
 import { getServerSession } from "next-auth"; // Importamos el lector de sesiones
+import { authOptions } from "@/lib/auth";
+
 
 const prisma = new PrismaClient();
 export const dynamic = 'force-dynamic';
 
 export default async function ClientesPage() {
   // 1. Verificamos quién es el usuario y si es ADMIN
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   const esAdmin = (session?.user as any)?.role === "ADMIN";
 
   const clientes = await prisma.cliente.findMany({

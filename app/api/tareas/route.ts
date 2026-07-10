@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -8,7 +9,7 @@ const prisma = new PrismaClient();
 export async function POST(request: Request) {
   try {
      // 1. ESTA LÍNEA TE FALTABA: Traer la sesión real del servidor
-     const session = await getServerSession();
+     const session = await getServerSession(authOptions);
      
      const esAdmin = (session?.user as any)?.role === "ADMIN";
      
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
 // Leer las tareas (Con filtro inteligente por rol)
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     const userId = (session?.user as any)?.id;
     const esAdmin = (session?.user as any)?.role === "ADMIN";
 

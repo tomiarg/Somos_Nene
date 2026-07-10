@@ -2,12 +2,15 @@ import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import FormularioTarea from "./FormularioTarea"; // Un componente que vamos a crear ahora
+import { authOptions } from "@/lib/auth";
+
+
 
 const prisma = new PrismaClient();
 export const dynamic = 'force-dynamic';
 
 export default async function NuevaTareaPage() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   const esAdmin = (session?.user as any)?.role === "ADMIN";
 
   if (!esAdmin) {

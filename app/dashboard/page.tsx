@@ -1,11 +1,11 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth"; // 👇 1. Importamos la configuración
 
 export default async function DashboardPage() {
-  // Verificamos quién está intentando entrar
-  const session = await getServerSession();
+  // 👇 2. AHORA SÍ le pasamos la config a la función para que lea el rol
+  const session = await getServerSession(authOptions);
 
-  // Si no hay sesión, lo mandamos de vuelta al login
   if (!session) {
     redirect("/login");
   }
