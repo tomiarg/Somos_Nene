@@ -12,14 +12,18 @@ export default function Sidebar() {
 
   // 1. Lista base para todos los empleados
   const baseLinks = [
-    { href: "/dashboard/clientes", icon: "👥", label: "Clientes" },
     { href: "/dashboard/tareas", icon: "✅", label: "Producción (Mumi)" },
-    { href: "/dashboard/calendario", icon: "📅", label: "Calendario" },
   ];
 
-  // 2. Si el usuario existe y es ADMIN, le sumamos la Bóveda de forma segura
-  const links = session?.user && (session.user as any).role === "ADMIN"
-    ? [...baseLinks, { href: "/dashboard/finanzas", icon: "📊", label: "Bóveda" }]
+// 2. Si es ADMIN, le agregamos Clientes arriba y la Bóveda abajo
+  const isAdmin = session?.user && (session.user as any).role === "ADMIN";
+  const links = isAdmin
+    ? [
+        { href: "/dashboard/clientes", icon: "👥", label: "Clientes" },
+        ...baseLinks,
+         { href: "/dashboard/calendario", icon: "📅", label: "Calendario" },
+        { href: "/dashboard/finanzas", icon: "📊", label: "Bóveda" }
+      ]
     : baseLinks;
 
   // Función para saber si un link está activo

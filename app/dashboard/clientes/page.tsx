@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
 import { getServerSession } from "next-auth"; // Importamos el lector de sesiones
 import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 
 const prisma = new PrismaClient();
@@ -12,15 +13,25 @@ export default async function ClientesPage() {
   const session = await getServerSession(authOptions);
   const esAdmin = (session?.user as any)?.role === "ADMIN";
 
+
+  if (!session || (session.user as any).role !== "ADMIN") {
+    redirect("/dashboard");
+  }
   const clientes = await prisma.cliente.findMany({
     where: { activo: true },
     orderBy: { createdAt: 'desc' }
   });
+  // Calculamos el total convirtiendo los montos a números reales
+  const totalMensual = clientes.reduce((acc, cliente) => acc + Number(cliente.montoMensual || 0), 0);
 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Clientes Vigentes</h2>
+    {/* Cartel verde con el total sumado */}
+    <span className="bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full text-sm">
+      Total: ${totalMensual.toLocaleString("es-AR", { maximumFractionDigits: 0 })} USD
+    </span>
         <Link href="/dashboard/clientes/nuevo" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium">
           + Nuevo Cliente
         </Link>
@@ -56,7 +67,7 @@ export default async function ClientesPage() {
                   {/* Ocultamos la celda del monto si NO es admin */}
                   {esAdmin && (
                     <td className="px-6 py-4">
-                      <span className="font-medium text-green-700">${cliente.montoMensual.toFixed(2)}</span>
+                      <span className="font-medium text-green-700">${Number(cliente.montoMensual).toLocaleString("es-AR", { maximumFractionDigits: 0 })}</span>
                       {cliente.montoSecundario && (
                         <span className="text-gray-400 ml-2 block text-xs">Sec: ${cliente.montoSecundario.toFixed(2)}</span>
                       )}
