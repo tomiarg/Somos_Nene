@@ -32,6 +32,11 @@ export default async function DashboardPage() {
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
             Bienvenido al nuevo sistema 🚀
           </h2>
+
+          {/* 👇 AGREGA ESTA LÍNEA TEMPORAL 👇 */}
+    <pre className="bg-gray-200 p-4 rounded text-xs mt-4">
+      {JSON.stringify(session, null, 2)}
+    </pre>
           <p className="text-gray-600 mb-8">
             Tu inicio de sesión y conexión a la base de datos están funcionando al 100%.
           </p>
