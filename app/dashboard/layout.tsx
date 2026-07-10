@@ -1,30 +1,23 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import Sidebar from "./Sidebar";
 
-// 👇 1. Importamos el puente acá arriba
-import Providers from "./Providers"; 
-
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Somos Nene",
-  description: "Panel de control",
-};
-
-export default function RootLayout({
+export default function DashboardLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
-        {/* 👇 2. Envolvemos a los children con el Providers */}
-        <Providers>
-          {children}
-        </Providers>
-      </body>
-    </html>
+    <div className="flex min-h-screen bg-gray-50 font-sans">
+      {/* El Menú que armamos recién */}
+      <Sidebar />
+
+      {/* 
+        El contenedor principal. 
+        Le ponemos pt-16 para que en celular el contenido no quede tapado por la barra superior. 
+        En compu (md:pt-0) se ve normal.
+      */}
+      <main className="flex-1 w-full pt-16 md:pt-0 overflow-x-hidden">
+        {children}
+      </main>
+    </div>
   );
 }
