@@ -68,9 +68,11 @@ export default async function ClientesPage() {
                   {esAdmin && (
                     <td className="px-6 py-4">
                       <span className="font-medium text-green-700">${Number(cliente.montoMensual).toLocaleString("es-AR", { maximumFractionDigits: 0 })}</span>
-                      {cliente.montoSecundario && (
-                        <span className="text-gray-400 ml-2 block text-xs">Sec: ${cliente.montoSecundario.toFixed(2)}</span>
-                      )}
+                      {Number(cliente.montoSecundario) > 0 && (
+  <span className="text-gray-400 ml-2 block text-xs">
+    Sec: ${Number(cliente.montoSecundario).toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+  </span>
+)}
                     </td>
                   )}
                   
