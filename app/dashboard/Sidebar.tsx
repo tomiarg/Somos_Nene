@@ -1,24 +1,26 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 export default function Sidebar() {
-  const { data: session } = useSession() || {};
+  const { data: session } = useSession();
   const pathname = usePathname();
   const [menuAbierto, setMenuAbierto] = useState(false);
 
-  // Nuestra lista de secciones. Podés agregar más en el futuro acá mismo.
-  const links = [
+  // 1. Lista base para todos los empleados
+  const baseLinks = [
     { href: "/dashboard/clientes", icon: "👥", label: "Clientes" },
     { href: "/dashboard/tareas", icon: "✅", label: "Producción (Mumi)" },
     { href: "/dashboard/calendario", icon: "📅", label: "Calendario" },
   ];
-  if ((session?.user as any)?.role === "ADMIN") {
-    links.push({ href: "/dashboard/finanzas", icon: "📊", label: "Bóveda" });
-  }
+
+  // 2. Si el usuario existe y es ADMIN, le sumamos la Bóveda de forma segura
+  const links = session?.user && (session.user as any).role === "ADMIN"
+    ? [...baseLinks, { href: "/dashboard/finanzas", icon: "📊", label: "Bóveda" }]
+    : baseLinks;
 
   // Función para saber si un link está activo
   const isActive = (path: string) => pathname.startsWith(path);
@@ -27,7 +29,9 @@ export default function Sidebar() {
     <>
       {/* 📱 BARRA SUPERIOR PARA CELULARES (Visible solo en mobile) */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white flex items-center justify-between px-4 z-40 shadow-md">
-        <span className="font-bold text-lg tracking-wide">SOMOS NENE</span>
+        <Link href="/dashboard" className="font-bold text-lg tracking-wide hover:text-purple-400 transition-colors">
+          SOMOS NENE
+        </Link>
         <button 
           onClick={() => setMenuAbierto(!menuAbierto)} 
           className="p-2 bg-gray-800 rounded-md focus:outline-none"
@@ -56,12 +60,16 @@ export default function Sidebar() {
         menuAbierto ? "translate-x-0" : "-translate-x-full"
       } md:translate-x-0 md:static md:h-screen md:sticky md:top-0`}>
         
-        {/* Logo de la Agencia */}
-        <div className="h-16 flex items-center justify-center border-b border-gray-800 md:h-20">
+        {/* Logo de la Agencia con Link al Dashboard */}
+        <Link 
+          href="/dashboard" 
+          onClick={() => setMenuAbierto(false)}
+          className="h-16 flex items-center justify-center border-b border-gray-800 md:h-20 hover:scale-105 transition-transform"
+        >
           <h1 className="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
             SOMOS NENE
           </h1>
-        </div>
+        </Link>
 
         {/* Links de Navegación */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -85,9 +93,12 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Botón de Salir (Base visual por ahora) */}
+        {/* Botón de Salir (AHORA 100% FUNCIONAL) */}
         <div className="p-4 border-t border-gray-800">
-          <button className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-gray-400 hover:bg-red-500/10 hover:text-red-500 transition-colors font-medium">
+          <button 
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-gray-400 hover:bg-red-500/10 hover:text-red-500 transition-colors font-medium"
+          >
             <span className="text-xl">🚪</span> Cerrar Sesión
           </button>
         </div>
