@@ -83,23 +83,34 @@ export default function FinanzasPage() {
     );
   }
 
-  // Si la base de datos está vacía en el primer arranque, usamos este mock estratégico de respaldo para que no rompa
-  const resumen = datos?.resumen || { totalFacturado: 1500000, totalCobrado: 1100000, totalDeuda: 400000, totalGastos: 900000, gananciaNeta: 200000, margenUtilidad: 22, puntoEquilibrio: 900000, superadoPuntoEquilibrio: true };
-  const gastos = datos?.gastos || { pauta: 350000, empleados: 400000, contenido: 150000 };
-  const clientesGrafico = datos?.clientesGrafico?.length ? datos.clientesGrafico : [
-    { name: "Icaro", facturado: 600000, cobrado: 600000 },
-    { name: "TomiPrueba", facturado: 500000, cobrado: 200000 },
-    { name: "Gamberro", facturado: 400000, cobrado: 300000 },
-  ];
+  // 🧹 LIMPIEZA DE DATOS: Si no hay data real de la API, arrancamos todo en cero absoluto.
+  const resumen = datos?.resumen || { 
+    totalFacturado: 0, 
+    totalCobrado: 0, 
+    totalDeuda: 0, 
+    totalGastos: 0, 
+    gananciaNeta: 0, 
+    margenUtilidad: 0, 
+    puntoEquilibrio: 0, 
+    superadoPuntoEquilibrio: false 
+  };
+  
+  const gastos = datos?.gastos || { pauta: 0, empleados: 0, contenido: 0 };
   const todosLosPagos = datos?.todosLosPagos || [];
-  const listaMeses = datos?.listaMeses || ["Abono Julio 2026"];
+  const listaMeses = datos?.listaMeses?.length ? datos.listaMeses : [];
 
   const pendientes = todosLosPagos.filter((p: any) => p.estado === "PENDIENTE");
   const cobrados = todosLosPagos.filter((p: any) => p.estado === "PAGADO");
 
-  const pctPauta = Math.round((gastos.pauta / resumen.totalGastos) * 100) || 0;
-  const pctEmpleados = Math.round((gastos.empleados / resumen.totalGastos) * 100) || 0;
-  const pctContenido = Math.round((gastos.contenido / resumen.totalGastos) * 100) || 0;
+  // Prevención de división por cero matemática
+  const divisorGastos = resumen.totalGastos > 0 ? resumen.totalGastos : 1;
+  const pctPauta = Math.round((gastos.pauta / divisorGastos) * 100) || 0;
+  const pctEmpleados = Math.round((gastos.empleados / divisorGastos) * 100) || 0;
+  const pctContenido = Math.round((gastos.contenido / divisorGastos) * 100) || 0;
+
+  // Cálculo seguro para la barra de Punto de Equilibrio
+  const divisorMeta = resumen.puntoEquilibrio > 0 ? resumen.puntoEquilibrio : 1;
+  const pctMeta = Math.min(Math.round((resumen.totalCobrado / divisorMeta) * 100), 100) || 0;
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto text-black space-y-8">
@@ -115,9 +126,13 @@ export default function FinanzasPage() {
               onChange={(e) => cambiarDeMes(e.target.value)}
               className="bg-gray-100 border-2 border-gray-200 text-sm font-bold px-3 py-1.5 rounded-lg text-purple-700 outline-none focus:border-purple-500 bg-white"
             >
-              {listaMeses.map((mes: string) => (
-                <option key={mes} value={mes}>{mes}</option>
-              ))}
+              {listaMeses.length > 0 ? (
+                listaMeses.map((mes: string) => (
+                  <option key={mes} value={mes}>{mes}</option>
+                ))
+              ) : (
+                <option value="">Sin períodos activos</option>
+              )}
             </select>
           </div>
         </div>
@@ -155,13 +170,13 @@ export default function FinanzasPage() {
           </div>
           <div className="w-full h-8 bg-gray-100 rounded-xl overflow-hidden flex shadow-inner">
             <div className="bg-orange-500 h-full flex items-center justify-center text-[11px] text-white font-bold" style={{ width: `${pctEmpleados}%` }}>
-              {pctEmpleados}%
+              {pctEmpleados > 0 ? `${pctEmpleados}%` : ''}
             </div>
             <div className="bg-blue-500 h-full flex items-center justify-center text-[11px] text-white font-bold" style={{ width: `${pctPauta}%` }}>
-              {pctPauta}%
+              {pctPauta > 0 ? `${pctPauta}%` : ''}
             </div>
             <div className="bg-indigo-500 h-full flex items-center justify-center text-[11px] text-white font-bold" style={{ width: `${pctContenido}%` }}>
-              {pctContenido}%
+              {pctContenido > 0 ? `${pctContenido}%` : ''}
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
@@ -190,7 +205,7 @@ export default function FinanzasPage() {
                 <span>Meta: ${resumen.puntoEquilibrio.toLocaleString()}</span>
               </div>
               <div className="w-full bg-gray-100 h-4 rounded-full overflow-hidden shadow-inner relative">
-                <div className={`h-full rounded-full ${resumen.superadoPuntoEquilibrio ? 'bg-green-500' : 'bg-amber-500'}`} style={{ width: `${Math.min(Math.round((resumen.totalCobrado / resumen.puntoEquilibrio) * 100), 100)}%` }}></div>
+                <div className={`h-full rounded-full ${resumen.superadoPuntoEquilibrio ? 'bg-green-500' : 'bg-amber-500'}`} style={{ width: `${pctMeta}%` }}></div>
               </div>
             </div>
           </div>
