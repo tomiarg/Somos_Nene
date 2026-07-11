@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 // Obtener un cliente específico
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params; // Le decimos que espere a leer el ID
+    const { id } = await params;
     const cliente = await prisma.cliente.findUnique({ where: { id } });
     
     if (!cliente) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
@@ -18,17 +18,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-// Actualizar el cliente y guardar el historial
+// Actualizar el cliente
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    // 1. Verificamos la sesión con el método que ya nos funciona perfecto
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id; 
+    const esAdmin = (session?.user as any)?.role === "ADMIN";
     
-    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    if (!session || !esAdmin) {
+      return NextResponse.json({ error: "No autorizado. Solo ADMIN puede editar." }, { status: 401 });
+    }
 
-    const { id } = await params; // Le decimos que espere a leer el ID
+    const { id } = await params;
     const body = await request.json();
     
+    // 2. Actualizamos el cliente
     const clienteActualizado = await prisma.cliente.update({
       where: { id },
       data: {
@@ -43,17 +47,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
     });
 
-    await prisma.historialCliente.create({
-      data: {
-        accion: "EDITADO",
-        detalles: "Se actualizaron los datos del cliente.",
-        clienteId: clienteActualizado.id,
-        usuarioId: userId
-      }
-    });
-
     return NextResponse.json(clienteActualizado);
   } catch (error) {
+    console.error("Error al actualizar:", error);
     return NextResponse.json({ error: "Error al actualizar" }, { status: 500 });
   }
 }
