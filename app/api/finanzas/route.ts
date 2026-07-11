@@ -1,5 +1,3 @@
-
-
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -34,8 +32,14 @@ export async function GET(request: Request) {
     const totalCobrado = pagos.reduce((acc, p) => p.estado === "PAGADO" ? acc + p.monto : acc, 0);
     const totalDeuda = totalFacturado - totalCobrado;
 
-    // Tus tres pilares fijos de costos operativos mensuales
-    const gastosYCostos = { pauta: 350000, empleados: 400000, contenido: 150000 };
+    // NUEVO: Buscamos los gastos REALES guardados para este mes específico
+    const gastosDB = await prisma.gastoMes.findUnique({
+      where: { mes: mesAAuditar }
+    });
+    
+    // Si todavía no cargaste gastos para este mes, arranca en 0
+    const gastosYCostos = gastosDB || { pauta: 0, empleados: 0, contenido: 0 };
+    
     const totalGastos = gastosYCostos.pauta + gastosYCostos.empleados + gastosYCostos.contenido;
     const gananciaNeta = totalCobrado - totalGastos;
     const margenUtilidad = totalCobrado > 0 ? Math.round((gananciaNeta / totalCobrado) * 100) : 0;
@@ -68,12 +72,13 @@ export async function GET(request: Request) {
         monto: p.monto,
         estado: p.estado,
         moneda: p.moneda,
-        cuentaDestino: p.cuentaDestino
+        cuentaDestino: p.cuentaDestino,
+        fechaPago: p.fechaPago // Agregamos la fecha para que el frontend la pueda leer al editar
       })),
       listaMeses: listaMeses.length ? listaMeses : ["Abono Julio 2026"]
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en GET finanzas:", error);
     return NextResponse.json({ error: "Error en GET finanzas" }, { status: 500 });
   }
 }
@@ -106,11 +111,45 @@ export async function POST(request: Request) {
   }
 }
 
-// 3. REGISTRAR UN COBRO REAL: Setea monto, moneda, caja y lo pasa a verde
+// 3. MULTI-ACCIÓN: Registrar Cobro, Editar Gastos o Editar Pago Viejo
 export async function PUT(request: Request) {
   try {
-    const body = await request.json(); // { pagoId, monto, moneda, cuentaDestino }
-    
+    const body = await request.json(); 
+
+    // ACCIÓN A: EDITAR GASTOS OPERATIVOS DEL MES
+    if (body.accion === "EDITAR_GASTOS") {
+      const { mes, empleados, pauta, contenido } = body;
+      
+      // Upsert: Si el mes ya existe lo actualiza, si no existe lo crea de cero
+      const gastosActualizados = await prisma.gastoMes.upsert({
+        where: { mes: mes },
+        update: { empleados, pauta, contenido },
+        create: { mes, empleados, pauta, contenido }
+      });
+      return NextResponse.json(gastosActualizados);
+    }
+
+    // ACCIÓN B: EDITAR UN PAGO YA COBRADO (Corregir errores)
+    if (body.accion === "EDITAR_PAGO") {
+      const { pagoId, monto, moneda, cuentaDestino, fechaPago } = body;
+      
+      // Convertimos el string de la fecha ("YYYY-MM-DD") a un objeto Date real
+      // Agregamos horas para evitar desfases de zona horaria
+      const fechaExacta = new Date(`${fechaPago}T12:00:00`); 
+
+      const actualizado = await prisma.pago.update({
+        where: { id: pagoId },
+        data: {
+          monto: parseFloat(monto),
+          moneda,
+          cuentaDestino,
+          fechaPago: fechaExacta
+        }
+      });
+      return NextResponse.json(actualizado);
+    }
+
+    // ACCIÓN C: REGISTRAR UN COBRO NUEVO (El flujo normal que ya tenías)
     const actualizado = await prisma.pago.update({
       where: { id: body.pagoId },
       data: {
@@ -118,12 +157,13 @@ export async function PUT(request: Request) {
         moneda: body.moneda,
         cuentaDestino: body.cuentaDestino,
         estado: "PAGADO",
-        fechaPago: new Date()
+        fechaPago: new Date() // Si es un cobro nuevo, le clava la fecha de HOY
       }
     });
 
     return NextResponse.json(actualizado);
   } catch (error) {
-    return NextResponse.json({ error: "Error al registrar cobro" }, { status: 500 });
+    console.error("Error en PUT finanzas:", error);
+    return NextResponse.json({ error: "Error al actualizar la base de datos" }, { status: 500 });
   }
 }

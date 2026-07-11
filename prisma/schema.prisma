@@ -141,3 +141,14 @@ model Publicacion {
   cliente       Cliente  @relation(fields: [clienteId], references: [id])
   createdAt     DateTime @default(now())
 }
+
+// Tabla para guardar los costos operativos de cada mes
+model GastoMes {
+  id        String   @id @default(uuid())
+  mes       String   @unique
+  empleados Float    @default(0)
+  pauta     Float    @default(0)
+  contenido Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
