@@ -18,14 +18,14 @@ export default async function CalendarioPage() {
     orderBy: { nombre: 'asc' }
   });
 
-  return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-800">Grilla de Publicación</h2>
-        <p className="text-gray-500">Hacé clic en un día para programar. Clic en un posteo para completarlo y reprogramar el próximo.</p>
+ return (
+    // 👇 Fijate acá, cambiamos p-8 por p-2 sm:p-8
+    <div className="p-2 sm:p-8 max-w-7xl mx-auto">
+      <div className="mb-4 sm:mb-8 px-2 sm:px-0">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Grilla de Publicación</h2>
+        <p className="text-xs sm:text-base text-gray-500 mt-1">Hacé clic en un día para programar. Clic en un posteo para completarlo y reprogramar.</p>
       </div>
       
-      {/* 3. Le pasamos las variables con los nombres exactos que espera el hijo */}
       <CalendarioGrid publicacionesIniciales={publicaciones} clientes={clientes} />
     </div>
   );

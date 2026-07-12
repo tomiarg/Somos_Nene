@@ -6,17 +6,14 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
   const [publicaciones, setPublicaciones] = useState(publicacionesIniciales);
   const [fechaBase, setFechaBase] = useState(new Date());
   
-  // NUEVO: Control de vista (Mes o Semana)
   const [vistaCal, setVistaCal] = useState<"MES" | "SEMANA">("MES");
 
-  // Estados para los Modales
   const [modalNuevo, setModalNuevo] = useState(false);
   const [diaSeleccionado, setDiaSeleccionado] = useState("");
   
   const [modalCompletar, setModalCompletar] = useState(false);
   const [pubSeleccionada, setPubSeleccionada] = useState<any>(null);
   
-  // Estados de los formularios
   const [formNuevo, setFormNuevo] = useState({ clienteId: "", tipo: "REEL" });
   const [formReprogramar, setFormReprogramar] = useState({ dias: 3, tipo: "STORY" });
 
@@ -33,14 +30,10 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
   for (let i = 0; i < offset; i++) { dias.push(null); }
   for (let i = 1; i <= diasEnElMes; i++) { dias.push(i); }
 
-  // Lógica de calendario (Semana)
+  // Lógica de calendario (Agenda 7 Días - Rolling window)
   const obtenerDiasSemana = (fecha: Date) => {
-    const inicio = new Date(fecha);
-    const dia = inicio.getDay();
-    const diff = inicio.getDate() - dia + (dia === 0 ? -6 : 1); // Ajusta para que empiece el Lunes
-    inicio.setDate(diff);
     return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(inicio);
+      const d = new Date(fecha);
       d.setDate(d.getDate() + i);
       return d;
     });
@@ -58,13 +51,17 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
     }
   };
 
+  const irAHoy = () => {
+    setFechaBase(new Date());
+  };
+
   const getColorPorTipo = (tipo: string, estado: string) => {
-    if (estado === "PUBLICADO") return "bg-gray-200 text-gray-500 border-gray-300 line-through opacity-70";
+    if (estado === "PUBLICADO") return "bg-gray-200 text-gray-500 line-through opacity-70";
     switch (tipo) {
-      case "REEL": return "bg-pink-500 text-white border-pink-600";
-      case "CARRUSEL": return "bg-blue-500 text-white border-blue-600";
-      case "STORY": return "bg-orange-400 text-white border-orange-500";
-      default: return "bg-teal-500 text-white border-teal-600";
+      case "REEL": return "bg-pink-500 text-white";
+      case "CARRUSEL": return "bg-blue-500 text-white";
+      case "STORY": return "bg-orange-400 text-white";
+      default: return "bg-teal-500 text-white";
     }
   };
 
@@ -138,27 +135,42 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
   };
 
   return (
-    <div className="relative text-black space-y-4">
+    <div className="relative text-black space-y-3 sm:space-y-4">
       
       {/* --- PANEL DE CONTROL SUPERIOR --- */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden p-3 sm:p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
         
         {/* Pestañas Mes / Semana */}
         <div className="bg-gray-100 p-1 rounded-lg inline-flex w-full sm:w-auto">
-          <button onClick={() => setVistaCal("SEMANA")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-bold rounded-md transition-all ${vistaCal === "SEMANA" ? "bg-white shadow-sm text-blue-600" : "text-gray-500 hover:text-gray-700"}`}>Semana</button>
-          <button onClick={() => setVistaCal("MES")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-bold rounded-md transition-all ${vistaCal === "MES" ? "bg-white shadow-sm text-blue-600" : "text-gray-500 hover:text-gray-700"}`}>Mes</button>
+          <button 
+            onClick={() => { setVistaCal("SEMANA"); irAHoy(); }} 
+            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-md transition-all ${vistaCal === "SEMANA" ? "bg-white shadow-sm text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            Próximos 7 días
+          </button>
+          <button 
+            onClick={() => setVistaCal("MES")} 
+            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold rounded-md transition-all ${vistaCal === "MES" ? "bg-white shadow-sm text-blue-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            Mes completo
+          </button>
         </div>
 
         {/* Controles de Tiempo */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-          <button onClick={() => cambiarFecha(-1)} className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm text-gray-600 font-bold hover:bg-gray-100 transition-colors">&lt;</button>
-          <h3 className="text-sm sm:text-base font-bold uppercase text-center min-w-[140px] text-gray-800">
-            {vistaCal === "MES" 
-              ? `${meses[mesActual]} ${anioActual}` 
-              : `${diasDeLaSemana[0].getDate()} ${meses[diasDeLaSemana[0].getMonth()].substring(0,3)} - ${diasDeLaSemana[6].getDate()} ${meses[diasDeLaSemana[6].getMonth()].substring(0,3)}`
-            }
-          </h3>
-          <button onClick={() => cambiarFecha(1)} className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm text-gray-600 font-bold hover:bg-gray-100 transition-colors">&gt;</button>
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          <button onClick={irAHoy} className="px-3 sm:px-4 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg shadow-sm text-xs sm:text-sm font-bold hover:bg-blue-100 transition-colors">
+            Hoy
+          </button>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button onClick={() => cambiarFecha(-1)} className="px-3 sm:px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm text-gray-600 font-bold hover:bg-gray-100 transition-colors">&lt;</button>
+            <h3 className="text-xs sm:text-base font-bold uppercase text-center min-w-[120px] sm:min-w-[140px] text-gray-800">
+              {vistaCal === "MES" 
+                ? `${meses[mesActual]} ${anioActual}` 
+                : `${diasDeLaSemana[0].getDate()} ${meses[diasDeLaSemana[0].getMonth()].substring(0,3)} - ${diasDeLaSemana[6].getDate()} ${meses[diasDeLaSemana[6].getMonth()].substring(0,3)}`
+              }
+            </h3>
+            <button onClick={() => cambiarFecha(1)} className="px-3 sm:px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg shadow-sm text-gray-600 font-bold hover:bg-gray-100 transition-colors">&gt;</button>
+          </div>
         </div>
       </div>
 
@@ -168,16 +180,17 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
         {vistaCal === "MES" ? (
           
           /* ======================================================== */
-          /* VISTA MENSUAL (Grilla)                                   */
+          /* VISTA MENSUAL: Ultra densidad para Mobile                */
           /* ======================================================== */
           <>
             <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/80">
               {["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map(dia => (
-                <div key={dia} className="text-center py-2.5 text-[10px] sm:text-xs font-bold text-gray-500 uppercase">{dia}</div>
+                <div key={dia} className="text-center py-1.5 sm:py-2.5 text-[9px] sm:text-xs font-bold text-gray-500 uppercase">{dia}</div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 auto-rows-[minmax(100px,auto)] sm:auto-rows-[minmax(120px,auto)]">
+            {/* Reducimos la altura mínima de la fila a 70px en celulares para que no haya scroll gigante */}
+            <div className="grid grid-cols-7 auto-rows-[minmax(70px,auto)] sm:auto-rows-[minmax(120px,auto)]">
               {dias.map((dia, index) => {
                 if (!dia) return <div key={index} className="border-r border-b border-gray-50 bg-gray-50/30"></div>;
 
@@ -189,21 +202,22 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
                   <div 
                     key={index} 
                     onClick={() => abrirModalNuevoMes(dia)}
-                    className={`border-r border-b border-gray-100 p-1 sm:p-2 cursor-pointer transition-colors hover:bg-gray-50 ${esHoy ? 'bg-blue-50/30' : ''}`}
+                    // En mobile (sm) reducimos el padding a p-0.5 para ganar espacio
+                    className={`border-r border-b border-gray-100 p-0.5 sm:p-2 cursor-pointer transition-colors hover:bg-gray-50 ${esHoy ? 'bg-blue-50/40' : ''}`}
                   >
-                    <div className="mb-1.5 sm:mb-2 flex justify-center sm:justify-start">
-                      <span className={`text-[10px] sm:text-xs font-bold w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full ${esHoy ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500'}`}>{dia}</span>
+                    <div className="mb-0.5 sm:mb-2 flex justify-center sm:justify-start">
+                      <span className={`text-[9px] sm:text-xs font-bold w-4 h-4 sm:w-6 sm:h-6 flex items-center justify-center rounded-full ${esHoy ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-500'}`}>{dia}</span>
                     </div>
                     
-                    <div className="space-y-1">
+                    {/* Espaciado mínimo entre posteos en el teléfono */}
+                    <div className="space-y-[1px] sm:space-y-1">
                       {pubsDelDia.map(pub => (
                         <div 
                           key={pub.id} 
                           onClick={(e) => { e.stopPropagation(); abrirModalCompletar(pub); }}
-                          // MAGIA RESPONSIVE: Texto más chico, paddings microscópicos en celular
-                          className={`text-[9px] sm:text-[10px] p-0.5 px-1 sm:p-1 sm:px-1.5 rounded overflow-hidden whitespace-nowrap text-ellipsis font-bold shadow-sm border cursor-pointer hover:opacity-80 transition-opacity ${getColorPorTipo(pub.tipo, pub.estado)}`}
+                          // Textos de 8px en celular, sin borde, padding casi invisible
+                          className={`text-[8px] sm:text-[10px] p-[1px] px-0.5 sm:p-1 sm:px-1.5 rounded-sm sm:rounded overflow-hidden whitespace-nowrap text-ellipsis font-bold shadow-sm sm:border sm:border-black/10 cursor-pointer leading-tight sm:leading-normal hover:opacity-80 ${getColorPorTipo(pub.tipo, pub.estado)}`}
                         >
-                          {/* Eliminamos el "@" en celulares para ganar esos 2 caracteres clave */}
                           {pub.cliente?.instagramUser || pub.cliente?.nombre}
                           <span className="hidden sm:inline"> - {pub.tipo}</span>
                         </div>
@@ -218,7 +232,7 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
         ) : (
 
           /* ======================================================== */
-          /* VISTA SEMANAL (Lista vertical, ideal para celular)       */
+          /* VISTA AGENDA 7 DÍAS: Ideal para seguimiento diario       */
           /* ======================================================== */
           <div className="divide-y divide-gray-100">
             {diasDeLaSemana.map((diaObj, index) => {
@@ -228,40 +242,42 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
               const nombreDia = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][diaObj.getDay()];
 
               return (
-                <div key={index} className={`flex flex-col sm:flex-row p-4 sm:p-6 gap-4 sm:gap-8 transition-colors ${esHoy ? 'bg-blue-50/20' : 'hover:bg-gray-50'}`}>
+                <div key={index} className={`flex flex-col sm:flex-row p-4 sm:p-6 gap-3 sm:gap-8 transition-colors ${esHoy ? 'bg-blue-50/20' : 'hover:bg-gray-50'}`}>
                   
-                  {/* Columna Izquierda: Fecha */}
+                  {/* Fecha */}
                   <div className="sm:w-32 flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start sm:pr-6 sm:border-r border-gray-100">
                     <div className="flex sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
-                      <span className={`text-sm font-bold uppercase ${esHoy ? 'text-blue-600' : 'text-gray-500'}`}>{nombreDia}</span>
-                      <span className={`text-3xl font-black ${esHoy ? 'text-blue-600' : 'text-gray-800'}`}>{diaObj.getDate()}</span>
+                      <span className={`text-xs sm:text-sm font-bold uppercase ${esHoy ? 'text-blue-600' : 'text-gray-500'}`}>
+                        {esHoy ? 'HOY' : nombreDia}
+                      </span>
+                      <span className={`text-2xl sm:text-3xl font-black ${esHoy ? 'text-blue-600' : 'text-gray-800'}`}>{diaObj.getDate()}</span>
                     </div>
-                    <button onClick={() => abrirModalNuevoStr(fechaStr)} className="sm:mt-3 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors shadow-sm">
+                    <button onClick={() => abrirModalNuevoStr(fechaStr)} className="sm:mt-3 text-[10px] sm:text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors shadow-sm">
                       + Programar
                     </button>
                   </div>
                   
-                  {/* Columna Derecha: Tarjetas de Eventos Grandes */}
-                  <div className="flex-1 flex flex-col gap-3">
+                  {/* Tarjetas de Eventos */}
+                  <div className="flex-1 flex flex-col gap-2">
                     {pubsDelDia.length === 0 ? (
-                      <span className="text-sm text-gray-400 italic py-2">Día libre, sin publicaciones programadas.</span>
+                      <span className="text-xs sm:text-sm text-gray-400 italic py-2">Sin publicaciones programadas.</span>
                     ) : (
                       pubsDelDia.map(pub => (
                         <div 
                           key={pub.id} 
                           onClick={() => abrirModalCompletar(pub)} 
-                          className={`p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md transition-all flex justify-between items-center ${getColorPorTipo(pub.tipo, pub.estado)}`}
+                          className={`p-3 sm:p-4 rounded-xl border sm:border-black/10 shadow-sm cursor-pointer hover:shadow-md transition-all flex justify-between items-center ${getColorPorTipo(pub.tipo, pub.estado)}`}
                         >
                           <div>
-                            <p className="font-black text-base sm:text-lg tracking-tight">
+                            <p className="font-black text-sm sm:text-lg tracking-tight">
                               {pub.cliente?.instagramUser ? `@${pub.cliente.instagramUser}` : pub.cliente?.nombre}
                             </p>
-                            <p className="text-xs opacity-90 font-bold mt-1 uppercase tracking-wider flex items-center gap-1.5">
+                            <p className="text-[10px] sm:text-xs opacity-90 font-bold mt-0.5 sm:mt-1 uppercase tracking-wider flex items-center gap-1.5">
                               {pub.tipo === 'REEL' ? '🎥' : pub.tipo === 'CARRUSEL' ? '🖼️' : pub.tipo === 'STORY' ? '📱' : '📝'} {pub.tipo}
                             </p>
                           </div>
                           {pub.estado !== "PUBLICADO" && (
-                            <div className="bg-white/20 text-white px-4 py-2 rounded-lg text-xs font-bold backdrop-blur-sm border border-white/30">
+                            <div className="bg-white/20 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-[10px] sm:text-xs font-bold backdrop-blur-sm border border-white/30">
                               ✓ Completar
                             </div>
                           )}
