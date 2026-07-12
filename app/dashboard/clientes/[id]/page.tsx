@@ -23,7 +23,6 @@ export default function EditarClientePage({ params }: { params: Promise<{ id: st
   });
 
   useEffect(() => {
-    // Desempaquetamos los params antes de hacer la búsqueda
     params.then((parametrosResueltos) => {
       setIdCliente(parametrosResueltos.id);
       
@@ -66,6 +65,27 @@ export default function EditarClientePage({ params }: { params: Promise<{ id: st
     }
   };
 
+  // NUEVA FUNCIÓN: Dar de baja al cliente
+  const handleEliminar = async () => {
+    // Confirmación de seguridad
+    if (!window.confirm(`¿Estás seguro de que querés dar de baja a ${formData.nombre}? Dejará de aparecer en la lista de clientes vigentes.`)) {
+      return;
+    }
+
+    setGuardando(true);
+    const res = await fetch(`/api/clientes/${idCliente}`, {
+      method: "DELETE"
+    });
+
+    if (res.ok) {
+      router.push("/dashboard/clientes");
+      router.refresh();
+    } else {
+      alert("Error al intentar dar de baja al cliente.");
+      setGuardando(false);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -76,8 +96,8 @@ export default function EditarClientePage({ params }: { params: Promise<{ id: st
     <div className="p-8 max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Editar Cliente</h2>
-        <Link href="/dashboard/clientes" className="text-blue-600 hover:underline">
-          Volver
+        <Link href="/dashboard/clientes" className="text-blue-600 hover:underline font-medium">
+          ← Volver a la lista
         </Link>
       </div>
 
@@ -117,10 +137,26 @@ export default function EditarClientePage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        <button disabled={guardando} type="submit" className="w-full mt-6 bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700">
-          {guardando ? "Actualizando..." : "Guardar Cambios"}
+        <button disabled={guardando} type="submit" className="w-full mt-6 bg-blue-600 text-white font-medium py-3 px-4 rounded-md hover:bg-blue-700 transition-colors">
+          {guardando ? "Procesando..." : "Guardar Cambios"}
         </button>
       </form>
+
+      {/* ZONA DE PELIGRO: Dar de baja */}
+      <div className="mt-8 bg-red-50 p-6 rounded-xl border border-red-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <h3 className="font-bold text-red-800 text-lg">Dar de baja al cliente</h3>
+          <p className="text-sm text-red-600 mt-1">El cliente se ocultará del listado, pero se mantendrá su historial de pagos en la bóveda.</p>
+        </div>
+        <button 
+          onClick={handleEliminar}
+          disabled={guardando}
+          className="bg-white border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-bold py-2 px-6 rounded-md transition-colors whitespace-nowrap"
+        >
+          Dar de baja
+        </button>
+      </div>
+
     </div>
   );
 }

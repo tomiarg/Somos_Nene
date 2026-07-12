@@ -53,3 +53,28 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "Error al actualizar" }, { status: 500 });
   }
 }
+
+// 3. DELETE: Baja lógica (Soft delete) para no romper el historial financiero
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions);
+    const esAdmin = (session?.user as any)?.role === "ADMIN";
+    
+    if (!session || !esAdmin) {
+      return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+    }
+
+    const { id } = await params;
+    
+    // Lo "apagamos" cambiándole el estado activo a false
+    const clienteBaja = await prisma.cliente.update({
+      where: { id },
+      data: { activo: false }
+    });
+
+    return NextResponse.json(clienteBaja);
+  } catch (error) {
+    console.error("Error al dar de baja:", error);
+    return NextResponse.json({ error: "Error al dar de baja" }, { status: 500 });
+  }
+}

@@ -74,6 +74,7 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
       alert("📡 Error de conexión con el servidor.");
     }
   };
+
   const abrirModalCompletar = (pub: any) => {
     if (pub.estado === "PUBLICADO") return;
     setPubSeleccionada(pub);
@@ -155,7 +156,8 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
                       onClick={(e) => { e.stopPropagation(); abrirModalCompletar(pub); }}
                       className={`text-[10px] p-1 px-1.5 rounded truncate font-semibold shadow-sm border cursor-pointer hover:opacity-80 transition-opacity ${getColorPorTipo(pub.tipo, pub.estado)}`}
                     >
-                      {pub.cliente?.nombre} - {pub.tipo}
+                      {/* ACÁ ESTÁ LA MAGIA PARA VER EL INSTAGRAM */}
+                      {pub.cliente?.instagramUser ? `@${pub.cliente.instagramUser}` : pub.cliente?.nombre} - {pub.tipo}
                     </div>
                   ))}
                 </div>
@@ -201,7 +203,10 @@ export default function CalendarioGrid({ publicacionesIniciales, clientes }: { p
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full border-t-4 border-green-500">
             <h3 className="text-xl font-bold text-gray-800 mb-1">¡Posteo Completado! 🎉</h3>
-            <p className="text-sm text-gray-500 mb-5">Has publicado el {pubSeleccionada.tipo} de {pubSeleccionada.cliente?.nombre}.</p>
+            <p className="text-sm text-gray-500 mb-5">
+              {/* ACÁ TAMBIÉN PUSIMOS EL INSTAGRAM EN EL MENSAJE DE ÉXITO */}
+              Has publicado el {pubSeleccionada.tipo} de <strong>{pubSeleccionada.cliente?.instagramUser ? `@${pubSeleccionada.cliente.instagramUser}` : pubSeleccionada.cliente?.nombre}</strong>.
+            </p>
             
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-5">
               <h4 className="font-bold text-gray-700 mb-3 text-sm">¿Cuándo volver a publicar para este cliente?</h4>

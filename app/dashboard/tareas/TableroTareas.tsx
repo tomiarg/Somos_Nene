@@ -22,7 +22,7 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
   // AGRUPACIÓN 1: POR CLIENTE (Como estaba antes)
   // ----------------------------------------------------
   const tareasPorCliente = tareas.reduce((acc, tarea) => {
-    const nombreCliente = tarea.cliente.nombre;
+    const nombreCliente = tarea.cliente.instagramUser ? `@${tarea.cliente.instagramUser}` : tarea.cliente.nombre;
     if (!acc[nombreCliente]) acc[nombreCliente] = [];
     acc[nombreCliente].push(tarea);
     return acc;
@@ -88,7 +88,7 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
             <p className={`text-lg font-bold flex items-center gap-2 ${tarea.estado === "COMPLETADO" ? "text-green-600 line-through opacity-70" : "text-gray-800"}`}>
               {/* Le agregamos una etiqueta con el nombre del cliente para que no se pierda en la vista de Fechas */}
               <span className="text-xs font-black uppercase tracking-wider text-purple-700 bg-purple-100 px-2 py-1 rounded-md">
-                {tarea.cliente.nombre}
+                {tarea.cliente.instagramUser ? `@${tarea.cliente.instagramUser}` : tarea.cliente.nombre}
               </span>
               {tarea.titulo}
             </p>

@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export default async function CalendarioPage() {
   // 1. Buscamos las publicaciones reales en lugar de las tareas
   const publicaciones = await prisma.publicacion.findMany({
-    include: { cliente: { select: { nombre: true } } },
+    include: { cliente: { select: { nombre: true, instagramUser: true } } },
     orderBy: { fechaPrevista: 'asc' }
   });
 

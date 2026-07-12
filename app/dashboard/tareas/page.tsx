@@ -9,7 +9,7 @@ export default async function TareasPage() {
   // Buscamos todas las tareas, incluyendo los datos del cliente y de quién la tiene asignada
   const tareas = await prisma.tarea.findMany({
     include: {
-      cliente: { select: { nombre: true } },
+      cliente: { select: { nombre: true, instagramUser: true } },
       asignadoA: { select: { name: true } }
     },
     orderBy: { fechaAsignada: 'asc' }
