@@ -10,6 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Somos Nene",
   description: "Panel de control",
+  manifest: "/manifest.json", 
 };
 
 export default function RootLayout({

@@ -1,0 +1,16 @@
+{
+  "name": "Somos Nene",
+  "short_name": "Nene",
+  "description": "Panel de Agencia",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#1e1b4b",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

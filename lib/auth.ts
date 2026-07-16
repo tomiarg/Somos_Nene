@@ -37,12 +37,14 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = user.id; // <-- Ahora el token también guarda tu ID
         token.role = (user as any).role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
+        (session.user as any).id = token.id; // <-- Se lo pasamos a la sesión final
         (session.user as any).role = token.role;
       }
       return session;
@@ -53,6 +55,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // <-- Magia: La sesión ahora dura 30 DÍAS (en segundos)
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
