@@ -6,7 +6,7 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
   const [tareas, setTareas] = useState(tareasIniciales);
   const [clientesExpandidos, setClientesExpandidos] = useState<Record<string, boolean>>({});
   
-  // NUEVO ESTADO: Controla si vemos el tablero agrupado por "CLIENTE" o por "FECHA"
+  // Controla si vemos el tablero agrupado por "CLIENTE" o por "FECHA"
   const [vista, setVista] = useState<"FECHA" | "CLIENTE">("FECHA");
 
   const hoy = new Date().toISOString().split('T')[0];
@@ -19,17 +19,17 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
   ).length;
 
   // ----------------------------------------------------
-  // AGRUPACIÓN 1: POR CLIENTE (Como estaba antes)
+  // AGRUPACIÓN 1: POR CLIENTE
   // ----------------------------------------------------
   const tareasPorCliente = tareas.reduce((acc, tarea) => {
-    const nombreCliente = tarea.cliente.instagramUser ? `@${tarea.cliente.instagramUser}` : tarea.cliente.nombre;
+    const nombreCliente = tarea.cliente?.instagramUser ? `@${tarea.cliente.instagramUser}` : tarea.cliente?.nombre;
     if (!acc[nombreCliente]) acc[nombreCliente] = [];
     acc[nombreCliente].push(tarea);
     return acc;
   }, {} as Record<string, any[]>);
 
   // ----------------------------------------------------
-  // AGRUPACIÓN 2: POR FECHA (Lo nuevo)
+  // AGRUPACIÓN 2: POR FECHA
   // ----------------------------------------------------
   const tareasAtrasadas = tareas.filter(t => t.estado !== "COMPLETADO" && new Date(t.fechaAsignada).toISOString().split('T')[0] < hoy);
   const tareasHoy = tareas.filter(t => t.estado !== "COMPLETADO" && new Date(t.fechaAsignada).toISOString().split('T')[0] === hoy);
@@ -85,19 +85,30 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
 
         <div className="flex-1 space-y-3">
           <div className="flex justify-between items-center border-b border-gray-100 pb-2 flex-wrap gap-2">
-            <p className={`text-lg font-bold flex items-center gap-2 ${tarea.estado === "COMPLETADO" ? "text-green-600 line-through opacity-70" : "text-gray-800"}`}>
-              {/* Le agregamos una etiqueta con el nombre del cliente para que no se pierda en la vista de Fechas */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Etiqueta del Cliente (Instagram) */}
               <span className="text-xs font-black uppercase tracking-wider text-purple-700 bg-purple-100 px-2 py-1 rounded-md">
-                {tarea.cliente.instagramUser ? `@${tarea.cliente.instagramUser}` : tarea.cliente.nombre}
+                {tarea.cliente?.instagramUser ? `@${tarea.cliente.instagramUser}` : tarea.cliente?.nombre}
               </span>
-              {tarea.titulo}
-            </p>
+              
+              {/* Etiqueta de a quién está asignada */}
+              {tarea.asignadoA && (
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 px-2 py-1 rounded-md border border-blue-100">
+                  👤 {tarea.asignadoA.name}
+                </span>
+              )}
+
+              <p className={`text-lg font-bold ml-1 ${tarea.estado === "COMPLETADO" ? "text-green-600 line-through opacity-70" : "text-gray-800"}`}>
+                {tarea.titulo}
+              </p>
+            </div>
+            
             <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
               new Date(tarea.fechaAsignada).toISOString().split('T')[0] < hoy && tarea.estado !== "COMPLETADO" 
-                ? "bg-red-100 text-red-700" // Rojo si está atrasada
+                ? "bg-red-100 text-red-700" 
                 : new Date(tarea.fechaAsignada).toISOString().split('T')[0] === hoy && tarea.estado !== "COMPLETADO"
-                ? "bg-green-100 text-green-700" // Verde si es hoy
-                : "bg-gray-100 text-gray-500" // Gris normal
+                ? "bg-green-100 text-green-700" 
+                : "bg-gray-100 text-gray-500" 
             }`}>
               📅 {new Date(tarea.fechaAsignada).toLocaleDateString()}
             </span>
@@ -118,19 +129,23 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
               </div>
             )}
 
-            {(tarea.linkCanva || tarea.linkMaterial) && (
+            {/* SECCIÓN DE LINKS (Canva + Material) */}
+            {(tarea.linkCanva || tarea.linkMaterial) ? (
               <div className="flex flex-wrap gap-3 pt-1">
                 {tarea.linkCanva && (
-                  <a href={tarea.linkCanva} target="_blank" className="inline-flex items-center gap-1 text-purple-700 hover:text-purple-900 hover:underline font-bold bg-purple-100 px-4 py-2 rounded-lg transition-colors">
+                  <a href={tarea.linkCanva} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-purple-700 hover:text-purple-900 hover:underline font-bold bg-purple-100 px-4 py-2 rounded-lg transition-colors shadow-sm border border-purple-200">
                     🎨 Link Original de Canva ↗
                   </a>
                 )}
                 {tarea.linkMaterial && (
-                  <a href={tarea.linkMaterial} target="_blank" className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 hover:underline font-bold bg-blue-100 px-4 py-2 rounded-lg transition-colors">
+                  <a href={tarea.linkMaterial} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 hover:underline font-bold bg-blue-100 px-4 py-2 rounded-lg transition-colors shadow-sm border border-blue-200">
                     📁 Link de Materiales / Drive ↗
                   </a>
                 )}
               </div>
+            ) : (
+              // Mensaje cuando no hay links cargados
+              <p className="text-xs text-gray-400 italic pt-1">Sin enlaces adjuntos.</p>
             )}
           </div>
 
@@ -161,7 +176,7 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
   return (
     <div className="space-y-8 text-black">
       
-      {/* SECCIÓN 0: SWITCH DE VISTAS (NUEVO) */}
+      {/* SECCIÓN 0: SWITCH DE VISTAS */}
       <div className="flex justify-center sm:justify-end">
         <div className="inline-flex bg-gray-100 p-1 rounded-xl">
           <button 
@@ -198,9 +213,6 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
       {/* SECCIÓN 2: RENDERIZADO DINÁMICO SEGÚN LA VISTA ELEGIDA */}
       {vista === "FECHA" ? (
         
-        /* ---------------------------------------------------- */
-        /* VISTA POR FECHAS (Ideal para producción diaria)      */
-        /* ---------------------------------------------------- */
         <div className="space-y-8">
           
           {/* TAREAS ATRASADAS */}
@@ -245,9 +257,6 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
 
       ) : (
 
-        /* ---------------------------------------------------- */
-        /* VISTA POR CLIENTES (Como estaba antes)               */
-        /* ---------------------------------------------------- */
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           {Object.keys(tareasPorCliente).length === 0 ? (
             <div className="p-8 text-center text-gray-500">No hay tareas asignadas.</div>
@@ -300,7 +309,7 @@ export default function TableroTareas({ tareasIniciales }: { tareasIniciales: an
         </div>
       )}
 
-      {/* TAREAS COMPLETADAS (Globales, al final de la pantalla) */}
+      {/* TAREAS COMPLETADAS */}
       {tareasCompletadas.length > 0 && (
         <div className="mt-12 opacity-70 hover:opacity-100 transition-opacity">
           <h3 className="text-lg font-bold text-gray-500 mb-4 flex items-center gap-2">

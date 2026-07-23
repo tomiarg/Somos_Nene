@@ -8,16 +8,14 @@ const prisma = new PrismaClient();
 // Crear una nueva tarea
 export async function POST(request: Request) {
   try {
-     // 1. ESTA LÍNEA TE FALTABA: Traer la sesión real del servidor
      const session = await getServerSession(authOptions);
-     
      const esAdmin = (session?.user as any)?.role === "ADMIN";
      
      // Solo los administradores pueden crear/asignar tareas
      if (!esAdmin) {
-       // 2. ACÁ FALTABA EL PARÉNTESIS Y PUNTO Y COMA AL FINAL:
        return NextResponse.json({ error: "No autorizado" }, { status: 401 });
      }
+     
     const body = await request.json();
     
     const nuevaTarea = await prisma.tarea.create({
@@ -29,6 +27,7 @@ export async function POST(request: Request) {
         instrucciones: body.instrucciones || null,
         caption: body.caption || null,
         linkCanva: body.linkCanva || null,
+        linkMaterial: body.linkMaterial || null, // <-- ¡FALTABA ESTO! Ahora sí guarda el Drive
         grupoStories: body.grupoStories || null,
         clienteId: body.clienteId,
         asignadoAId: body.asignadoAId || null, // A quién se la damos (ej: Mumi)
@@ -55,10 +54,15 @@ export async function GET(request: Request) {
     const filtro = esAdmin ? {} : { asignadoAId: userId };
 
     const tareas = await prisma.tarea.findMany({
-      //where: filtro,
+      where: filtro, // <-- ¡Le sacamos las barras "//" para que el filtro funcione!
       include: {
-        cliente: { select: { nombre: true } }, // Traemos el nombre del cliente asociado
-        asignadoA: { select: { name: true } }  // Traemos el nombre de a quién se le asignó
+        cliente: { 
+          select: { 
+            nombre: true, 
+            instagramUser: true // <-- Volvemos a agregarlo para que el @ funcione
+          } 
+        },
+        asignadoA: { select: { name: true } }
       },
       orderBy: { fechaAsignada: 'asc' }
     });
